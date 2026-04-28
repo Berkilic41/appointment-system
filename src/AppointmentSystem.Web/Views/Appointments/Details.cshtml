@@ -1,0 +1,119 @@
+@model Appointment
+@{
+    ViewData["Title"] = $"Appointment #{Model.Id}";
+    var existing = ViewBag.ExistingRating as Rating;
+    var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+}
+
+<a asp-controller="Home" asp-action="Index" class="text-muted small text-decoration-none">← Back</a>
+
+<div class="card-section mt-2">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h1 class="h4 mb-1">Appointment #@Model.Id</h1>
+            <p class="text-muted mb-0">@Model.StartUtc.ToString("dddd, MMM d yyyy · HH:mm") UTC</p>
+        </div>
+        <span class="status-badge status-@Model.Status">@Model.Status</span>
+    </div>
+
+    <dl class="row mb-0">
+        <dt class="col-sm-3">Service</dt>          <dd class="col-sm-9">@Model.ServiceName</dd>
+        <dt class="col-sm-3">Provider</dt>         <dd class="col-sm-9">@Model.ProviderName</dd>
+        <dt class="col-sm-3">Customer</dt>         <dd class="col-sm-9">@Model.CustomerName <span class="text-muted small">@Model.CustomerEmail</span></dd>
+        <dt class="col-sm-3">Time</dt>             <dd class="col-sm-9">@Model.StartUtc.ToString("HH:mm") - @Model.EndUtc.ToString("HH:mm") (@(((int)(Model.EndUtc - Model.StartUtc).TotalMinutes)) min)</dd>
+        @if (!string.IsNullOrEmpty(Model.Notes))
+        {
+            <dt class="col-sm-3">Notes</dt>        <dd class="col-sm-9">@Model.Notes</dd>
+        }
+    </dl>
+</div>
+
+<div class="card-section mt-3">
+    <h2 class="h5 mb-3">Actions</h2>
+    <div class="d-flex flex-wrap gap-2">
+        @{
+            bool isProvider = User.IsInRole("Provider") && Model.ProviderId == userId;
+            bool isCustomer = User.IsInRole("Customer") && Model.CustomerId == userId;
+            bool isAdmin = User.IsInRole("Admin");
+        }
+        @if ((isProvider || isAdmin) && Model.Status == "Pending")
+        {
+            <form asp-action="ChangeStatus" method="post" class="d-inline">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="status" value="Confirmed" />
+                <button class="btn btn-success">✓ Confirm</button>
+            </form>
+        }
+        @if ((isProvider || isAdmin) && Model.Status == "Confirmed")
+        {
+            <form asp-action="ChangeStatus" method="post" class="d-inline">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="status" value="Completed" />
+                <button class="btn btn-primary">Mark Completed</button>
+            </form>
+        }
+        @if ((isProvider || isCustomer || isAdmin) && (Model.Status is "Pending" or "Confirmed"))
+        {
+            <form asp-action="ChangeStatus" method="post" class="d-inline" onsubmit="return confirm('Cancel this appointment?')">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="status" value="Cancelled" />
+                <button class="btn btn-outline-danger">Cancel</button>
+            </form>
+        }
+        @if (Model.Status == "Cancelled" || Model.Status == "Completed")
+        {
+            <span class="text-muted">No further actions.</span>
+        }
+    </div>
+</div>
+
+@if (Model.Status == "Completed" && isCustomer)
+{
+    <div class="card-section mt-3">
+        <h2 class="h5 mb-3">Rate this appointment</h2>
+        @if (existing is not null)
+        {
+            <p class="text-warning fs-5 mb-1">@(new string('★', existing.Stars))<span class="text-muted">@(new string('☆', 5 - existing.Stars))</span></p>
+            @if (!string.IsNullOrEmpty(existing.Comment))
+            {
+                <p class="text-muted">"@existing.Comment"</p>
+            }
+            <p class="text-muted small mb-0">Submitted @existing.CreatedAt.ToString("MMM d, yyyy")</p>
+        }
+        else
+        {
+            <form asp-action="SubmitRating" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="appointmentId" value="@Model.Id" />
+                <div class="stars mb-2" id="rating-stars">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        <span class="star" data-value="@i">★</span>
+                    }
+                </div>
+                <input type="hidden" name="stars" id="stars-input" value="0" />
+                <textarea name="comment" class="form-control mb-2" rows="2" placeholder="Optional comment" maxlength="1000"></textarea>
+                <button type="submit" class="btn btn-warning">Submit rating</button>
+            </form>
+        }
+    </div>
+}
+
+@section Scripts {
+    @if (Model.Status == "Completed" && existing is null)
+    {
+        <script>
+        (function () {
+            const stars = document.querySelectorAll('#rating-stars .star');
+            const input = document.getElementById('stars-input');
+            stars.forEach(star => {
+                star.addEventListener('click', () => {
+                    const v = parseInt(star.dataset.value, 10);
+                    input.value = v;
+                    stars.forEach(s => s.classList.toggle('filled', parseInt(s.dataset.value, 10) <= v));
+                });
+            });
+        })();
+        </script>
+    }
+}

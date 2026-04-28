@@ -1,0 +1,63 @@
+@model AdminDashboardViewModel
+@{ ViewData["Title"] = "Admin Dashboard"; }
+
+<h1 class="h3 mb-4">Admin dashboard</h1>
+
+<form method="get" class="card-section mb-4">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label small">From</label>
+            <input type="date" name="from" class="form-control" value="@Model.FromDate.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small">To</label>
+            <input type="date" name="to" class="form-control" value="@Model.ToDate.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-2"><button class="btn btn-primary w-100">Apply</button></div>
+        <div class="col-md-4 text-md-end text-muted small align-self-center">This week so far: <strong class="text-dark">@Model.TotalThisWeek</strong> appointments</div>
+    </div>
+</form>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card-section">
+            <h2 class="h5 mb-3">Daily volume</h2>
+            <table class="table table-sm align-middle">
+                <thead><tr><th>Day</th><th class="text-end">Total</th><th class="text-end text-warning">Pending</th><th class="text-end text-primary">Confirmed</th><th class="text-end text-success">Completed</th><th class="text-end text-secondary">Cancelled</th></tr></thead>
+                <tbody>
+                    @if (!Model.DailyCounts.Any()) { <tr><td colspan="6" class="text-center text-muted py-3">No appointments in this range.</td></tr> }
+                    @foreach (var d in Model.DailyCounts)
+                    {
+                        <tr>
+                            <td>@d.Day.ToString("ddd, MMM d")</td>
+                            <td class="text-end"><strong>@d.Total</strong></td>
+                            <td class="text-end">@d.Pending</td>
+                            <td class="text-end">@d.Confirmed</td>
+                            <td class="text-end">@d.Completed</td>
+                            <td class="text-end">@d.Cancelled</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card-section">
+            <h2 class="h5 mb-3">Provider utilization</h2>
+            <table class="table table-sm align-middle">
+                <thead><tr><th>Provider</th><th class="text-end">Hours</th><th class="text-end">Appts</th><th class="text-end">Rating</th></tr></thead>
+                <tbody>
+                    @foreach (var u in Model.Utilization)
+                    {
+                        <tr>
+                            <td><strong>@(u.FullName ?? u.Username)</strong></td>
+                            <td class="text-end">@(u.MinutesBooked / 60.0).ToString("F1")</td>
+                            <td class="text-end">@u.AppointmentCount</td>
+                            <td class="text-end">@(u.RatingCount > 0 ? $"{u.AverageRating:F1}★ ({u.RatingCount})" : "—")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

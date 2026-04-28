@@ -1,0 +1,29 @@
+@model IEnumerable<Notification>
+@{ ViewData["Title"] = "Notifications"; }
+
+<h1 class="h3 mb-3">🔔 Notifications</h1>
+
+<div class="card-section p-0">
+    <ul class="list-group list-group-flush">
+        @if (!Model.Any())
+        {
+            <li class="list-group-item text-muted text-center py-5">No notifications yet.</li>
+        }
+        @foreach (var n in Model)
+        {
+            <li class="list-group-item @(n.IsRead ? "" : "bg-info-subtle")">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <strong>@n.Title</strong>
+                        <p class="mb-1 text-muted">@n.Body</p>
+                        @if (n.RelatedAppointmentId.HasValue)
+                        {
+                            <a asp-controller="Appointments" asp-action="Details" asp-route-id="@n.RelatedAppointmentId" class="small">View appointment →</a>
+                        }
+                    </div>
+                    <span class="text-muted small">@n.CreatedAt.ToString("MMM d HH:mm")</span>
+                </div>
+            </li>
+        }
+    </ul>
+</div>

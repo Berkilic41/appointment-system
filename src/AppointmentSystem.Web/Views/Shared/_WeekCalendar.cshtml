@@ -1,0 +1,58 @@
+@model IEnumerable<Appointment>
+@{
+    var weekStart = ViewData["WeekStart"] as DateTime? ?? DateTime.UtcNow.Date;
+    var firstHour = 8;
+    var lastHour = 19;
+    var hourCount = lastHour - firstHour;
+    var dayLabels = new[] { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
+    var today = DateTime.UtcNow.Date;
+    var hideLink = ViewData["HideAppointmentLink"] as bool? ?? false;
+}
+
+<div class="calendar">
+    <div></div>
+    @for (int d = 0; d < 7; d++)
+    {
+        var day = weekStart.AddDays(d);
+        <div class="cal-header @(day == today ? "today" : "")">
+            @dayLabels[d]<br /><small class="fw-normal">@day.ToString("MMM d")</small>
+        </div>
+    }
+    @for (int h = 0; h < hourCount; h++)
+    {
+        var hour = firstHour + h;
+        <div class="cal-time-label">@hour:00</div>
+        @for (int d = 0; d < 7; d++)
+        {
+            var slotStart = weekStart.AddDays(d).AddHours(hour);
+            var slotEnd   = slotStart.AddHours(1);
+            <div class="cal-cell">
+                @foreach (var a in Model.Where(x => x.StartUtc < slotEnd && x.EndUtc > slotStart))
+                {
+                    var topPct = (a.StartUtc - slotStart).TotalMinutes;
+                    if (topPct < 0) topPct = 0;
+                    var heightPct = Math.Min((a.EndUtc - a.StartUtc).TotalMinutes, 60 - topPct);
+                    var topPx = (int)(topPct / 60 * 32);
+                    var heightPx = (int)(heightPct / 60 * 32);
+                    if (heightPx < 14) heightPx = 14;
+                    @if (hideLink)
+                    {
+                        <div class="cal-event @a.Status.ToLower()" style="top:@(topPx)px;height:@(heightPx)px"
+                             title="@a.ServiceName · @a.CustomerName">
+                            @a.StartUtc.ToString("HH:mm") @a.ServiceName
+                        </div>
+                    }
+                    else
+                    {
+                        <a class="cal-event @a.Status.ToLower() text-decoration-none"
+                           href="@Url.Action("Details", "Appointments", new { id = a.Id })"
+                           style="top:@(topPx)px;height:@(heightPx)px"
+                           title="@a.ServiceName · @a.CustomerName">
+                            @a.StartUtc.ToString("HH:mm") @a.ServiceName
+                        </a>
+                    }
+                }
+            </div>
+        }
+    }
+</div>

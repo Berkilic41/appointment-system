@@ -1,0 +1,39 @@
+@model IEnumerable<User>
+@{ ViewData["Title"] = "Users"; }
+
+<h1 class="h3 mb-3">Users</h1>
+
+<div class="card-section">
+    <table class="table align-middle mb-0">
+        <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Joined</th><th>Actions</th></tr></thead>
+        <tbody>
+            @foreach (var u in Model)
+            {
+                <tr class="@(u.IsActive ? "" : "opacity-50")">
+                    <td><strong>@u.Username</strong>@if (!u.IsActive) { <span class="badge bg-secondary ms-1">Disabled</span> }<div class="text-muted small">@u.FullName</div></td>
+                    <td class="text-muted small">@u.Email</td>
+                    <td>
+                        <form asp-action="SetRole" method="post" class="d-flex gap-1">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@u.Id" />
+                            <select name="role" class="form-select form-select-sm">
+                                <option value="Admin"    selected="@(u.Role == "Admin")">Admin</option>
+                                <option value="Provider" selected="@(u.Role == "Provider")">Provider</option>
+                                <option value="Customer" selected="@(u.Role == "Customer")">Customer</option>
+                            </select>
+                            <button class="btn btn-sm btn-outline-primary">Save</button>
+                        </form>
+                    </td>
+                    <td class="text-muted small">@u.CreatedAt.ToString("MMM d, yyyy")</td>
+                    <td>
+                        <form asp-action="SetActive" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@u.Id" /><input type="hidden" name="active" value="@(!u.IsActive)" />
+                            <button class="btn btn-sm @(u.IsActive ? "btn-outline-warning" : "btn-outline-success")">@(u.IsActive ? "Disable" : "Enable")</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

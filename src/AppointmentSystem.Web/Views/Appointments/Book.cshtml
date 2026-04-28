@@ -1,0 +1,84 @@
+@model BookingPageViewModel
+@{ ViewData["Title"] = $"Book with {Model.Provider.FullName}"; }
+
+<a asp-controller="Home" asp-action="Index" class="text-muted small text-decoration-none">← Back to providers</a>
+
+<div class="card-section mt-2 mb-4">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <h1 class="h4 mb-1">@Model.Provider.FullName</h1>
+            <p class="text-muted mb-2">@Model.Provider.Specialty</p>
+            <p class="mb-0">@Model.Provider.Bio</p>
+        </div>
+        <span class="text-warning fs-4">
+            @{ for (int i = 1; i <= 5; i++) { <span>@(i <= Model.Provider.AverageRating ? "★" : "☆")</span> } }
+            <small class="text-muted fs-6 ms-1">(@Model.Provider.RatingCount)</small>
+        </span>
+    </div>
+</div>
+
+<div class="card-section mb-4">
+    <h2 class="h5 mb-3">1. Choose service</h2>
+    <div class="row g-2 mb-3">
+        @foreach (var s in Model.Services)
+        {
+            <div class="col-md-4">
+                <button type="button" class="btn btn-outline-primary w-100 service-btn"
+                        data-service-id="@s.Id" data-duration="@s.DurationMinutes"
+                        @(Model.PreselectedServiceId == s.Id ? "data-selected=\"1\"" : "")>
+                    <strong>@s.Name</strong><br />
+                    <small>@s.DurationMinutes min · @s.Price.ToString("C")</small>
+                </button>
+            </div>
+        }
+    </div>
+    @if (!Model.Services.Any())
+    {
+        <p class="text-muted">This provider hasn't published any services yet.</p>
+    }
+</div>
+
+<div class="card-section mb-4">
+    <h2 class="h5 mb-3">2. Pick a date & time</h2>
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label class="form-label">Date</label>
+            <input type="date" id="slot-date" class="form-control" min="@DateTime.UtcNow.ToString("yyyy-MM-dd")" value="@DateTime.UtcNow.ToString("yyyy-MM-dd")" />
+        </div>
+    </div>
+    <div id="slot-status" class="text-muted small mb-2">Select a service to load available slots.</div>
+    <div id="slot-grid" class="slot-grid"></div>
+</div>
+
+<form asp-action="Confirm" method="post" id="confirm-form" class="card-section" style="display:none">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="providerId" value="@Model.Provider.UserId" />
+    <input type="hidden" name="serviceId" id="cf-serviceId" />
+    <input type="hidden" name="startUtc" id="cf-startUtc" />
+    <h2 class="h5 mb-3">3. Confirm booking</h2>
+    <div id="cf-summary" class="alert alert-info mb-3"></div>
+    <div class="mb-3">
+        <label class="form-label">Notes (optional)</label>
+        <textarea name="notes" class="form-control" rows="2" maxlength="2000"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Submit booking</button>
+</form>
+
+<hr class="my-5" />
+<h3 class="h5 mb-3">Provider's week (@Model.WeekStart.ToString("MMM d") - @Model.WeekStart.AddDays(6).ToString("MMM d"))</h3>
+<partial name="_WeekCalendar" model="Model.WeeklyAppointments" view-data="ViewDataDictionary(Model.WeekStart)" />
+
+@functions {
+    ViewDataDictionary ViewDataDictionary(DateTime weekStart)
+    {
+        var dict = new ViewDataDictionary(ViewData) { ["WeekStart"] = weekStart };
+        return dict;
+    }
+}
+
+@section Scripts {
+    <script src="~/js/booking.js" asp-append-version="true"></script>
+    <script>
+        window.PROVIDER_ID = @Model.Provider.UserId;
+    </script>
+}

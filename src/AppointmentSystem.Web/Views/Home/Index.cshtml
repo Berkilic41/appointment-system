@@ -1,0 +1,83 @@
+@model CustomerHomeViewModel
+@{
+    ViewData["Title"] = "Home";
+    var providers = ViewBag.Providers as IEnumerable<ProviderProfile> ?? [];
+}
+
+<h1 class="h3 mb-3">Find a provider</h1>
+<div class="row g-3 mb-5">
+    @foreach (var p in providers)
+    {
+        <div class="col-md-6 col-lg-4">
+            <div class="card-section provider-card h-100">
+                <h5 class="mb-1">@p.FullName</h5>
+                <p class="text-muted small mb-2">@p.Specialty</p>
+                <p class="small">@p.Bio</p>
+                <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                    <span class="text-warning">
+                        @{ for (int i = 1; i <= 5; i++) { <span>@(i <= p.AverageRating ? "★" : "☆")</span> } }
+                        <small class="text-muted ms-1">(@p.RatingCount)</small>
+                    </span>
+                    <a asp-controller="Appointments" asp-action="Book" asp-route-providerId="@p.UserId" class="btn btn-sm btn-primary">Book →</a>
+                </div>
+            </div>
+        </div>
+    }
+    @if (!providers.Any())
+    {
+        <div class="col-12 text-center text-muted py-5">No providers available yet.</div>
+    }
+</div>
+
+@if (Model.Upcoming.Any())
+{
+    <h2 class="h4 mb-3">Your upcoming appointments</h2>
+    <div class="table-responsive bg-white rounded-3 shadow-sm mb-4">
+        <table class="table mb-0 align-middle">
+            <thead class="table-light">
+                <tr><th>When</th><th>Provider</th><th>Service</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var a in Model.Upcoming)
+                {
+                    <tr>
+                        <td>@a.StartUtc.ToString("ddd, MMM d HH:mm")</td>
+                        <td>@a.ProviderName</td>
+                        <td>@a.ServiceName</td>
+                        <td><span class="status-badge status-@a.Status">@a.Status</span></td>
+                        <td><a asp-controller="Appointments" asp-action="Details" asp-route-id="@a.Id" class="btn btn-sm btn-outline-secondary">View</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (Model.Past.Any())
+{
+    <h2 class="h5 mb-3 text-muted">Past appointments</h2>
+    <div class="table-responsive bg-white rounded-3 shadow-sm">
+        <table class="table mb-0 align-middle">
+            <tbody>
+                @foreach (var a in Model.Past)
+                {
+                    <tr>
+                        <td class="text-muted small">@a.StartUtc.ToString("MMM d, yyyy")</td>
+                        <td>@a.ServiceName <span class="text-muted small">· @a.ProviderName</span></td>
+                        <td><span class="status-badge status-@a.Status">@a.Status</span></td>
+                        <td>
+                            @if (a.Status == "Completed" && a.RatingStars is null)
+                            {
+                                <a asp-controller="Appointments" asp-action="Details" asp-route-id="@a.Id" class="btn btn-sm btn-outline-warning">Rate</a>
+                            }
+                            else if (a.RatingStars.HasValue)
+                            {
+                                <span class="text-warning">@(new string('★', a.RatingStars.Value))</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

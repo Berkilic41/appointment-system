@@ -1,0 +1,46 @@
+@model IEnumerable<DomainService>
+@{ ViewData["Title"] = "Services"; }
+
+<div class="row">
+    <div class="col-md-7">
+        <h1 class="h3 mb-3">Services</h1>
+        <div class="card-section">
+            <table class="table align-middle mb-0">
+                <thead><tr><th>Name</th><th class="text-end">Duration</th><th class="text-end">Price</th><th>Status</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var s in Model)
+                    {
+                        <tr class="@(s.IsActive ? "" : "opacity-50")">
+                            <td><strong>@s.Name</strong><div class="text-muted small">@s.Description</div></td>
+                            <td class="text-end">@s.DurationMinutes min</td>
+                            <td class="text-end">@s.Price.ToString("C")</td>
+                            <td>@(s.IsActive ? "Active" : "Inactive")</td>
+                            <td>
+                                <form asp-action="ToggleService" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@s.Id" /><input type="hidden" name="active" value="@(!s.IsActive)" />
+                                    <button class="btn btn-sm @(s.IsActive ? "btn-outline-warning" : "btn-outline-success")">@(s.IsActive ? "Disable" : "Enable")</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="card-section">
+            <h2 class="h5 mb-3">+ New service</h2>
+            <form asp-action="CreateService" method="post">
+                @Html.AntiForgeryToken()
+                <div class="mb-2"><label class="form-label">Name</label><input name="name" class="form-control" required /></div>
+                <div class="mb-2"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="2"></textarea></div>
+                <div class="row">
+                    <div class="col"><label class="form-label">Duration (min)</label><input name="durationMinutes" type="number" min="5" max="480" value="30" class="form-control" required /></div>
+                    <div class="col"><label class="form-label">Price</label><input name="price" type="number" step="0.01" value="50.00" class="form-control" required /></div>
+                </div>
+                <button class="btn btn-primary w-100 mt-3">Create</button>
+            </form>
+        </div>
+    </div>
+</div>

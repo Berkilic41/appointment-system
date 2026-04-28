@@ -1,0 +1,49 @@
+@model ProviderDashboardViewModel
+@{ ViewData["Title"] = "My Schedule"; }
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card-section"><div class="text-muted small">Pending</div><div class="h2 mb-0 text-warning">@Model.Pending</div></div></div>
+    <div class="col-md-3"><div class="card-section"><div class="text-muted small">Confirmed</div><div class="h2 mb-0 text-primary">@Model.Confirmed</div></div></div>
+    <div class="col-md-3"><div class="card-section"><div class="text-muted small">Completed (this month)</div><div class="h2 mb-0 text-success">@Model.CompletedThisMonth</div></div></div>
+    <div class="col-md-3"><div class="card-section"><div class="text-muted small">Avg rating</div><div class="h2 mb-0 text-warning">@Model.AverageRating.ToString("F1")★ <small class="text-muted fs-6">(@Model.RatingCount)</small></div></div></div>
+</div>
+
+<h2 class="h4 mb-3">Week of @Model.WeekStart.ToString("MMM d, yyyy")</h2>
+<div class="d-flex gap-2 mb-3">
+    <a asp-action="Dashboard" asp-route-week="@Model.WeekStart.AddDays(-7).ToString("yyyy-MM-dd")" class="btn btn-sm btn-outline-secondary">← Previous week</a>
+    <a asp-action="Dashboard" asp-route-week="@DateTime.UtcNow.Date.ToString("yyyy-MM-dd")" class="btn btn-sm btn-outline-secondary">This week</a>
+    <a asp-action="Dashboard" asp-route-week="@Model.WeekStart.AddDays(7).ToString("yyyy-MM-dd")" class="btn btn-sm btn-outline-secondary">Next week →</a>
+</div>
+<partial name="_WeekCalendar" model="Model.WeeklyAppointments" view-data="ViewDataDictionary(Model.WeekStart)" />
+
+@functions {
+    ViewDataDictionary ViewDataDictionary(DateTime weekStart)
+    {
+        var dict = new ViewDataDictionary(ViewData) { ["WeekStart"] = weekStart };
+        return dict;
+    }
+}
+
+<h2 class="h5 mt-5 mb-3">Recent ratings</h2>
+@if (!Model.RecentRatings.Any())
+{
+    <p class="text-muted">No ratings yet.</p>
+}
+else
+{
+    <div class="row g-2">
+        @foreach (var r in Model.RecentRatings)
+        {
+            <div class="col-md-6">
+                <div class="card-section">
+                    <div class="d-flex justify-content-between mb-1">
+                        <strong>@r.CustomerName</strong>
+                        <span class="text-warning">@(new string('★', r.Stars))<span class="text-muted">@(new string('☆', 5 - r.Stars))</span></span>
+                    </div>
+                    <p class="text-muted small mb-1">@r.ServiceName · @r.CreatedAt.ToString("MMM d, yyyy")</p>
+                    @if (!string.IsNullOrEmpty(r.Comment)) { <p class="mb-0">"@r.Comment"</p> }
+                </div>
+            </div>
+        }
+    </div>
+}
