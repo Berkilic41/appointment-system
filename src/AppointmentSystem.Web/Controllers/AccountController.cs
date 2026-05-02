@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace AppointmentSystem.Web.Controllers;
 
@@ -13,10 +14,11 @@ public class AccountController : Controller
     private readonly IAuthService _auth;
     public AccountController(IAuthService auth) => _auth = auth;
 
-    [HttpGet]
+    [HttpGet, AllowAnonymous]
     public IActionResult Login(string? returnUrl) => View(new LoginViewModel { ReturnUrl = returnUrl });
 
-    [HttpPost, ValidateAntiForgeryToken]
+    [HttpPost, ValidateAntiForgeryToken, AllowAnonymous]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> Login(LoginViewModel vm)
     {
         if (!ModelState.IsValid) return View(vm);
@@ -32,10 +34,10 @@ public class AccountController : Controller
         return RedirectToAction("Index", "Home");
     }
 
-    [HttpGet]
+    [HttpGet, AllowAnonymous]
     public IActionResult Register() => View(new RegisterViewModel());
 
-    [HttpPost, ValidateAntiForgeryToken]
+    [HttpPost, ValidateAntiForgeryToken, AllowAnonymous]
     public async Task<IActionResult> Register(RegisterViewModel vm)
     {
         if (!ModelState.IsValid) return View(vm);
@@ -56,6 +58,7 @@ public class AccountController : Controller
         return RedirectToAction("Login");
     }
 
+    [AllowAnonymous]
     public IActionResult AccessDenied() => View();
 
     private async Task SignInAsync(AppointmentSystem.Data.Entities.User user)

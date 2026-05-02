@@ -33,6 +33,7 @@ public class AppointmentsController : Controller
 
     /// <summary>Provider booking page with weekly grid (customer view).</summary>
     [HttpGet("/book/{providerId:int}")]
+    [Authorize(Roles = "Customer")]
     public async Task<IActionResult> Book(int providerId, DateTime? week, int? serviceId)
     {
         var provider = await _providers.GetByIdAsync(providerId);
@@ -57,6 +58,7 @@ public class AppointmentsController : Controller
 
     /// <summary>AJAX endpoint: returns slot list for a specific provider+service+date.</summary>
     [HttpGet("/api/availability")]
+    [Authorize(Roles = "Customer")]
     public async Task<IActionResult> Availability(int providerId, int serviceId, DateTime date)
     {
         var slots = await _schedule.GetAvailableSlotsAsync(providerId, serviceId, date);
@@ -69,6 +71,7 @@ public class AppointmentsController : Controller
     }
 
     [HttpPost("/book/{providerId:int}/confirm"), ValidateAntiForgeryToken]
+    [Authorize(Roles = "Customer")]
     public async Task<IActionResult> Confirm(int providerId, int serviceId, DateTime startUtc, string? notes)
     {
         var result = await _appointments.BookAsync(CurrentUserId, providerId, serviceId, startUtc, notes);
@@ -109,6 +112,7 @@ public class AppointmentsController : Controller
     }
 
     [HttpPost, ValidateAntiForgeryToken]
+    [Authorize(Roles = "Customer")]
     public async Task<IActionResult> SubmitRating(int appointmentId, int stars, string? comment)
     {
         try

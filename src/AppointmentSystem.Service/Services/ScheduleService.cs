@@ -53,11 +53,16 @@ public class ScheduleService : IScheduleService
 
         if (!hours.Any()) return [];
 
-        var existing = (await _appts.GetForProviderAsync(providerId, dayStart, dayEnd))
+        // Run appointments and time-off queries in parallel — independent queries, no reason to serialize
+        var apptTask    = _appts.GetForProviderAsync(providerId, dayStart, dayEnd);
+        var timeOffTask = _schedule.GetTimeOffAsync(providerId, dayStart, dayEnd);
+        await Task.WhenAll(apptTask, timeOffTask);
+
+        var existing = apptTask.Result
             .Where(a => a.Status is "Pending" or "Confirmed")
             .ToList();
 
-        var timeOff = (await _schedule.GetTimeOffAsync(providerId, dayStart, dayEnd)).ToList();
+        var timeOff = timeOffTask.Result.ToList();
 
         var slots = new List<TimeSlot>();
         var duration = TimeSpan.FromMinutes(service.DurationMinutes);
