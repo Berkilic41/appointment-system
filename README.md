@@ -1,6 +1,23 @@
 # Appointment & Reservation System
 
+[![CI](https://github.com/Berkilic41/appointment-system/actions/workflows/ci.yml/badge.svg)](https://github.com/Berkilic41/appointment-system/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/)
+
 Multi-role appointment booking platform built with ASP.NET Core MVC (.NET 8), SQL Server, and ADO.NET (no ORM). Three-layer architecture: `AppointmentSystem.Data` → `AppointmentSystem.Service` (namespace `AppointmentSystem.Bll`) → `AppointmentSystem.Web`.
+
+## Why I Built This
+
+Appointment scheduling is a common business requirement in healthcare, beauty, consulting, and many other industries. I built this project to solve the core challenges of multi-provider booking systems: **concurrent reservation conflicts, role-based workflows, and real-time slot availability**. By deliberately avoiding an ORM, I gained deep control over query performance and transaction isolation levels — skills that directly transfer to production database work.
+
+## 🔑 Technical Highlights
+
+- **Race-condition-safe bookings** — `SERIALIZABLE` transactions with `UPDLOCK/HOLDLOCK` + a unique filtered index (`WHERE Status IN ('Pending','Confirmed')`) as defense-in-depth against double-booking
+- **Role-based access** — Admin / Provider / Customer with ASP.NET Core cookie auth; `[Authorize(Roles=...)]` enforced on every sensitive action
+- **Parallel availability queries** — `Task.WhenAll` for appointments + time-off queries, halving slot-load latency
+- **35+ unit tests** — xUnit + Moq covering booking conflict scenarios, status transitions, rating validation
+- **CI/CD** — GitHub Actions running tests + coverage upload on every push
+- **Containerized** — Multi-stage Dockerfile + docker-compose with SQL Server 2022
 
 ---
 
