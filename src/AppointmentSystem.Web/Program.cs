@@ -1,4 +1,6 @@
 using AppointmentSystem.Bll.Services;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using AppointmentSystem.Bll.Services.Interfaces;
 using AppointmentSystem.Data;
 using AppointmentSystem.Data.Repositories;
@@ -21,6 +23,8 @@ builder.Host.UseSerilog((ctx, cfg) => cfg
         "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}"));
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
