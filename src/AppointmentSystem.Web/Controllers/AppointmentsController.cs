@@ -75,13 +75,17 @@ public class AppointmentsController : Controller
     public async Task<IActionResult> Confirm(int providerId, int serviceId, DateTime startUtc, string? notes)
     {
         var result = await _appointments.BookAsync(CurrentUserId, providerId, serviceId, startUtc, notes);
-        if (!result.Success)
-        {
-            TempData["Error"] = result.ErrorMessage;
-            return RedirectToAction(nameof(Book), new { providerId });
-        }
-        TempData["Success"] = "Booking submitted! Awaiting provider confirmation.";
-        return RedirectToAction(nameof(Details), new { id = result.AppointmentId });
+        return result.Match(
+            onSuccess: appointmentId =>
+            {
+                TempData["Success"] = "Booking submitted! Awaiting provider confirmation.";
+                return RedirectToAction(nameof(Details), new { id = appointmentId });
+            },
+            onFailure: error =>
+            {
+                TempData["Error"] = error;
+                return RedirectToAction(nameof(Book), new { providerId });
+            });
     }
 
     public async Task<IActionResult> Details(int id)

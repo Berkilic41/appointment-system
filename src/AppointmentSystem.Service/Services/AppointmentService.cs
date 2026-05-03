@@ -1,7 +1,7 @@
-﻿using AppointmentSystem.Data.Entities;
-using AppointmentSystem.Data.Repositories.Interfaces;
-using AppointmentSystem.Bll.DTOs;
+﻿using AppointmentSystem.Bll.Common;
 using AppointmentSystem.Bll.Services.Interfaces;
+using AppointmentSystem.Data.Entities;
+using AppointmentSystem.Data.Repositories.Interfaces;
 
 namespace AppointmentSystem.Bll.Services;
 
@@ -24,17 +24,17 @@ public class AppointmentService : IAppointmentService
         _notifications = notifications;
     }
 
-    public async Task<BookingResult> BookAsync(int customerId, int providerId, int serviceId, DateTime startUtc, string? notes)
+    public async Task<Result<int>> BookAsync(int customerId, int providerId, int serviceId, DateTime startUtc, string? notes)
     {
         var service = await _services.GetByIdAsync(serviceId);
-        if (service is null) return new BookingResult(false, ErrorMessage: "Service not found.");
+        if (service is null) return Result<int>.Fail("Service not found.");
 
         var provider = await _users.GetByIdAsync(providerId);
         if (provider is null || provider.Role != "Provider")
-            return new BookingResult(false, ErrorMessage: "Provider not found.");
+            return Result<int>.Fail("Provider not found.");
 
         if (startUtc < DateTime.UtcNow)
-            return new BookingResult(false, ErrorMessage: "Cannot book a slot in the past.");
+            return Result<int>.Fail("Cannot book a slot in the past.");
 
         var endUtc = startUtc.AddMinutes(service.DurationMinutes);
 
@@ -68,11 +68,11 @@ public class AppointmentService : IAppointmentService
                 RelatedAppointmentId = id
             });
 
-            return new BookingResult(true, AppointmentId: id);
+            return Result<int>.Ok(id);
         }
         catch (BookingConflictException ex)
         {
-            return new BookingResult(false, ErrorMessage: ex.Message);
+            return Result<int>.Fail(ex.Message);
         }
     }
 

@@ -1,4 +1,5 @@
-﻿using AppointmentSystem.Data.Entities;
+﻿using AppointmentSystem.Bll.Common;
+using AppointmentSystem.Data.Entities;
 using AppointmentSystem.Bll.DTOs;
 using Service = AppointmentSystem.Data.Entities.Service;
 
@@ -6,8 +7,8 @@ namespace AppointmentSystem.Bll.Services.Interfaces;
 
 public interface IAuthService
 {
-    Task<AuthResult> LoginAsync(string email, string password);
-    Task<AuthResult> RegisterCustomerAsync(string username, string email, string password, string fullName, string? phone);
+    Task<Result<User>> LoginAsync(string email, string password);
+    Task<Result<User>> RegisterCustomerAsync(string username, string email, string password, string fullName, string? phone);
     Task<User?> GetByIdAsync(int id);
 }
 
@@ -44,7 +45,7 @@ public interface IScheduleService
 
 public interface IAppointmentService
 {
-    Task<BookingResult> BookAsync(int customerId, int providerId, int serviceId, DateTime startUtc, string? notes);
+    Task<Result<int>> BookAsync(int customerId, int providerId, int serviceId, DateTime startUtc, string? notes);
     Task<Appointment?> GetByIdAsync(int id);
     Task<IEnumerable<Appointment>> GetForProviderAsync(int providerId, DateTime fromUtc, DateTime toUtc);
     Task<IEnumerable<Appointment>> GetForCustomerAsync(int customerId);

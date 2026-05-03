@@ -23,12 +23,12 @@ public class AccountController : Controller
     {
         if (!ModelState.IsValid) return View(vm);
         var result = await _auth.LoginAsync(vm.Email, vm.Password);
-        if (!result.Success || result.User is null)
+        if (!result.IsSuccess)
         {
-            ModelState.AddModelError("", result.ErrorMessage ?? "Login failed.");
+            ModelState.AddModelError("", result.Error ?? "Login failed.");
             return View(vm);
         }
-        await SignInAsync(result.User);
+        await SignInAsync(result.Value!);
         if (!string.IsNullOrWhiteSpace(vm.ReturnUrl) && Url.IsLocalUrl(vm.ReturnUrl))
             return Redirect(vm.ReturnUrl);
         return RedirectToAction("Index", "Home");
@@ -42,12 +42,12 @@ public class AccountController : Controller
     {
         if (!ModelState.IsValid) return View(vm);
         var result = await _auth.RegisterCustomerAsync(vm.Username, vm.Email, vm.Password, vm.FullName, vm.Phone);
-        if (!result.Success || result.User is null)
+        if (!result.IsSuccess)
         {
-            ModelState.AddModelError("", result.ErrorMessage ?? "Registration failed.");
+            ModelState.AddModelError("", result.Error ?? "Registration failed.");
             return View(vm);
         }
-        await SignInAsync(result.User);
+        await SignInAsync(result.Value!);
         return RedirectToAction("Index", "Home");
     }
 
